@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from jose import jwt
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine
-from models import Task, Base
-from schemas import TaskCreate, TaskUpdate
+from task_service.schemas import TaskCreate, TaskUpdate
+from task_service.database import SessionLocal, engine
+from task_service.models import Task, Base
 
 SECRET_KEY = "mysecretkey"
 ALGORITHM = "HS256"

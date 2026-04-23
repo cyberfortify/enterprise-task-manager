@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine
-from models import User, Base
-from schemas import UserCreate
+from user_service.schemas import UserCreate
 from jose import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from user_service.database import SessionLocal, engine
+from user_service.models import User, Base
 
 SECRET_KEY = "mysecretkey"
 ALGORITHM = "HS256"
@@ -22,15 +22,22 @@ def get_db():
 
 def create_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(hours=2)
+    from datetime import datetime, timezone
+    expire = datetime.now(timezone.utc) + timedelta(hours=2)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 @router.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.username == user.username).first()
+
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already exists")
+
     new_user = User(username=user.username, password=user.password)
     db.add(new_user)
     db.commit()
+
     return {"message": "User created"}
 
 @router.post("/login")
